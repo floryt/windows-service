@@ -158,7 +158,7 @@ namespace FlorytService
             request.Method = "POST";
             // Create POST data and convert it to a byte array.
             string status = GetStatus();
-            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\"}";
+            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\", \"i\":\"0\"}";
             //Console.WriteLine(postData);
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             // Set the ContentType property of the WebRequest.
@@ -198,11 +198,25 @@ namespace FlorytService
                         if (this.state != ComputerState.LOGGED_OUT)
                         {
                             eventLog2.WriteEntry("locking", EventLogEntryType.Information);
-                            LockWorkStation();
+                            //LockWorkStation();
+                            WriteToFile("lock");
                         }
                         break;
                     case "shutdown":
                         eventLog2.WriteEntry("requested to shutdown", EventLogEntryType.Information);
+                        {
+                            eventLog2.WriteEntry("shutdown", EventLogEntryType.Information);
+                            //LockWorkStation();
+                            WriteToFile("shutdown");
+                        }
+                        break;
+                    case "present_message":
+                        eventLog2.WriteEntry("requested to shutdown", EventLogEntryType.Information);
+                        {
+                            eventLog2.WriteEntry("present message", EventLogEntryType.Information);
+                            //LockWorkStation();
+                            WriteToFile("present_message" + "hello");//array.message);
+                        }
                         break;
                     default:
                         eventLog2.WriteEntry("requested to continue", EventLogEntryType.Information);
@@ -258,6 +272,7 @@ namespace FlorytService
 
             return strUID;
         }
+
 
 
         [DllImport("wtsapi32.dll", SetLastError = true)]
@@ -362,6 +377,58 @@ namespace FlorytService
 
             //// Get the response.
             //WebResponse response = request.GetResponse();
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        internal struct TokPriv1Luid
+        {
+            public int Count;
+            public long Luid;
+            public int Attr;
+        }
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        internal static extern IntPtr GetCurrentProcess();
+
+        [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+        internal static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        internal static extern bool LookupPrivilegeValue(string host, string name, ref long pluid);
+
+        [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+        internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
+            ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
+
+        [DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
+        internal static extern bool ExitWindowsEx(int flg, int rea);
+
+        internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
+        internal const int TOKEN_QUERY = 0x00000008;
+        internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
+        internal const string SE_SHUTDOWN_NAME = "SeShutdownPrivilege";
+        internal const int EWX_LOGOFF = 0x00000000;
+        internal const int EWX_SHUTDOWN = 0x00000001;
+        internal const int EWX_REBOOT = 0x00000002;
+        internal const int EWX_FORCE = 0x00000004;
+        internal const int EWX_POWEROFF = 0x00000008;
+        internal const int EWX_FORCEIFHUNG = 0x00000010;
+
+        private void WriteToFile(string command)
+        {
+            string file_path = @"C:\Users\User\Desktop\command.txt";//@ is for no special chars
+
+            using (FileStream fs = File.Create(file_path)) //using because file is an unmanaged resource (=memory) so you make sure Dispose function will work for them (and for file, the 'Close' method as well)
+            {
+                //the file is created
+            }
+
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(file_path, true))
+            {
+                file.WriteLine(command);
+            }
+
+            eventLog2.WriteEntry("wrote to file", EventLogEntryType.Information);
         }
 
     }
