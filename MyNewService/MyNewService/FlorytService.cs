@@ -175,7 +175,7 @@ namespace FlorytService
             // Create POST data and convert it to a byte array.
             string status = GetStatus();
             string email = GetCurrentUser();
-            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\", \"email\":\"" + email + "\"}";
+            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\", \"user\":\"" + email + "\"}";
             //Console.WriteLine(postData);
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             // Set the ContentType property of the WebRequest.
@@ -311,7 +311,7 @@ namespace FlorytService
             // Create POST data and convert it to a byte array.
 
             string email = GetCurrentUser();
-            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"shutdown\", \"email\":\""+email+"\"}";
+            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"shutdown\", \"user\":\""+email+"\"}";
             //Console.WriteLine(postData);
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             // Set the ContentType property of the WebRequest.
