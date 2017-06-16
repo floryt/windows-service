@@ -75,6 +75,15 @@ namespace DoCommand
                     Console.WriteLine("NONE");
                 }
 
+                using (FileStream fs = File.Create(file_path)) //using because file is an unmanaged resource (=memory) so you make sure Dispose function will work for them (and for file, the 'Close' method as well)
+                {
+                    //the file is created
+                }
+
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(file_path, true))
+                {
+                    file.WriteLine("");
+                }
 
 
             }

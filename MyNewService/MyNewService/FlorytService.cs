@@ -146,6 +146,22 @@ namespace FlorytService
             }
         }
 
+        private string GetCurrentUser()
+        {
+            string file_path = @"C:\Users\User\Desktop\current_user.txt";//@ is for no special chars
+                                                                    //TODO: check if file exists
+            string readText = "";
+            try
+            {
+                readText = File.ReadAllText(file_path);
+            }
+            catch (Exception ex)
+            {
+                readText = "no user";
+            }
+
+            return readText;
+        }
 
         private void talkToServer()
         {
@@ -158,7 +174,8 @@ namespace FlorytService
             request.Method = "POST";
             // Create POST data and convert it to a byte array.
             string status = GetStatus();
-            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\", \"i\":\"1\"}";
+            string email = GetCurrentUser();
+            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\", \"email\":\"" + email + "\"}";
             //Console.WriteLine(postData);
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             // Set the ContentType property of the WebRequest.
@@ -215,7 +232,15 @@ namespace FlorytService
                         {
                             eventLog2.WriteEntry("present message", EventLogEntryType.Information);
                             //LockWorkStation();
-                            WriteToFile("present_message" + "hello");//array.message); in comment because Steven forgot to add it to the mock. -.-
+                            WriteToFile("present_message" + array.message);
+                        }
+                        break;
+                    case "take_screenshot":
+                        eventLog2.WriteEntry("requested to screenshot", EventLogEntryType.Information);
+                        {
+                            eventLog2.WriteEntry("take screenshot", EventLogEntryType.Information);
+                            //LockWorkStation();
+                            WriteToFile("take_screenshot" + array.message);
                         }
                         break;
                     default:
@@ -284,7 +309,9 @@ namespace FlorytService
             // Set the Method property of the request to POST.
             request.Method = "POST";
             // Create POST data and convert it to a byte array.
-            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"shutdown\"}";
+
+            string email = GetCurrentUser();
+            string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"shutdown\", \"email\":\""+email+"\"}";
             //Console.WriteLine(postData);
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             // Set the ContentType property of the WebRequest.
