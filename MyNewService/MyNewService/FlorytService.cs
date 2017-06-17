@@ -148,7 +148,7 @@ namespace FlorytService
 
         private string GetCurrentUser()
         {
-            string file_path = @"C:\Users\User\Desktop\current_user.txt";//@ is for no special chars
+            string file_path = @"C:\Program Files\Floryt\current_user.txt";//@ is for no special chars
                                                                     //TODO: check if file exists
             string readText = "";
             try
@@ -272,7 +272,7 @@ namespace FlorytService
             System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
 
             //strCommand is path and file name of command to run
-            pProcess.StartInfo.FileName = "C:\\Users\\User\\Desktop\\find_id.exe";
+            pProcess.StartInfo.FileName = @"C:\Program Files\Floryt\find_id.exe";
 
             //strCommandParameters are parameters to pass to program
             pProcess.StartInfo.Arguments = null;
@@ -334,7 +334,7 @@ namespace FlorytService
 
         private void WriteToFile(string command)
         {
-            string file_path = @"C:\Users\User\Desktop\command.txt";//@ is for no special chars
+            string file_path = @"C:\Program Files\Floryt\command.txt";//@ is for no special chars
 
             using (FileStream fs = File.Create(file_path)) //using because file is an unmanaged resource (=memory) so you make sure Dispose function will work for them (and for file, the 'Close' method as well)
             {

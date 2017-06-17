@@ -16,14 +16,14 @@ namespace http_windows_forms
 {
     public partial class Form1 : Form
     {
-        public static void uploadScreenshot()
+        public void uploadScreenshot()
         {
             //---get uid
             //Create process
             System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
 
             //strCommand is path and file name of command to run
-            pProcess.StartInfo.FileName = "C:\\Users\\User\\Desktop\\find_id.exe";
+            pProcess.StartInfo.FileName = "find_id.exe";
 
             //strCommandParameters are parameters to pass to program
             pProcess.StartInfo.Arguments = null;
@@ -82,10 +82,10 @@ namespace http_windows_forms
             {
 
             }
-            
+
         }
 
-        public static string CreateScreenshot()
+        public string CreateScreenshot()
         {
             //Create a new bitmap.
             var bmpScreenshot = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
@@ -105,9 +105,10 @@ namespace http_windows_forms
 
             // Save the screenshot to the specified path that the user has chosen.
             Guid g = Guid.NewGuid();
-            string p_path = g.ToString() + ".png";
+            string p_path = @"C:\Users\User\Floryt\" + g.ToString() + ".png";
+            //@"C:\Program Files\Floryt\" + 
             bmpScreenshot.Save(p_path, ImageFormat.Png);
-
+            label1.Text = "saved image";
             return p_path;
         }
 
@@ -134,7 +135,7 @@ namespace http_windows_forms
             uploadScreenshot();
 
             this.Close();
-            
+
         }
     }
 }

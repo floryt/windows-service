@@ -26,9 +26,9 @@ namespace DoCommand
             while (true)
             {
                 Thread.Sleep(7000); //sleep for 7 seconds
-                string file_path = @"C:\Users\User\Desktop\command.txt";//@ is for no special chars
+                string file_path = @"C:\Program Files\Floryt\command.txt";//@ is for no special chars
                                                                         //TODO: check if file exists
-                string readText = "";
+                string readText = "no text";
                 try
                 { 
                     readText = File.ReadAllText(file_path);
@@ -37,8 +37,8 @@ namespace DoCommand
                 {
                     readText = "no";
                 }
-                
 
+                Console.WriteLine("text - " + readText);
                 if (readText.Length >= 4 && readText.Substring(0, 4) == "lock")
                 {
                     LockWorkStation();
@@ -48,12 +48,14 @@ namespace DoCommand
                     string message = readText.Substring(15, readText.Length - 15);
                     //MessageBox((IntPtr)0, , message, "Message From Admin", 0);
                     MessageBox((IntPtr)0, message, "Message From Admin", 0);
+                    //TODO: change to windows forms
                 }
                 else if(readText.StartsWith("lock"))
                 {
                     var psi = new ProcessStartInfo("lock", "/s /t 0");
                     psi.CreateNoWindow = true;
                     psi.UseShellExecute = false;
+                    psi.WorkingDirectory = @"C:\Program Files\Floryt\";
                     Process.Start(psi);
                 }
                 else if (readText.StartsWith("shutdown"))
@@ -65,10 +67,20 @@ namespace DoCommand
                 }
                 else if (readText.StartsWith("take_screenshot"))
                 {
-                    var psi = new ProcessStartInfo("screenshot", "/s /t 0");
-                    psi.CreateNoWindow = true;
-                    psi.UseShellExecute = false;
-                    Process.Start(psi);
+                    Console.WriteLine("taking screenshot");
+                    try
+                    {
+                        var psi = new ProcessStartInfo("screenshot", "/s /t 0");
+                        psi.CreateNoWindow = true;
+                        psi.UseShellExecute = false;
+                        psi.WorkingDirectory = @"C:\Program Files\Floryt\";
+                        Process.Start(psi);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("exception " + ex.Message + "\n" + ex.StackTrace);
+                    }
+                    
                 }
                 else
                 {
