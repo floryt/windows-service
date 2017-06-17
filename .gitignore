@@ -24,6 +24,7 @@
 *.lib
 
 # Executables
+!MyNewService\FlorytService.exe
 \!*.exe
 *.out
 *.app
