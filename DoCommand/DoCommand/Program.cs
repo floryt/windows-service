@@ -26,7 +26,7 @@ namespace DoCommand
             while (true)
             {
                 Thread.Sleep(7000); //sleep for 7 seconds
-                string file_path = @"C:\Program Files\Floryt\command.txt";//@ is for no special chars
+                string file_path = @"C:\Users\User\Floryt\command.txt";//@ is for no special chars
                                                                         //TODO: check if file exists
                 string readText = "no text";
                 try
@@ -55,7 +55,7 @@ namespace DoCommand
                     var psi = new ProcessStartInfo("lock", "/s /t 0");
                     psi.CreateNoWindow = true;
                     psi.UseShellExecute = false;
-                    psi.WorkingDirectory = @"C:\Program Files\Floryt\";
+                    psi.WorkingDirectory = @"C:\Users\User\Floryt\";
                     Process.Start(psi);
                 }
                 else if (readText.StartsWith("shutdown"))
@@ -73,7 +73,7 @@ namespace DoCommand
                         var psi = new ProcessStartInfo("screenshot", "/s /t 0");
                         psi.CreateNoWindow = true;
                         psi.UseShellExecute = false;
-                        psi.WorkingDirectory = @"C:\Program Files\Floryt\";
+                        psi.WorkingDirectory = @"C:\Users\User\Floryt\";
                         Process.Start(psi);
                     }
                     catch (Exception ex)

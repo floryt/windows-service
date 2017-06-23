@@ -78,6 +78,7 @@ namespace FlorytService
 
 
             // Set up a timer to trigger every half a minute.
+            eventLog2.WriteEntry(("Created timer"), EventLogEntryType.Information);
             System.Timers.Timer timer = new System.Timers.Timer();
             timer.Interval = 10000; // 10 seconds
             timer.Elapsed += new System.Timers.ElapsedEventHandler(this.OnTimer); //giving the function the timer does
@@ -110,9 +111,17 @@ namespace FlorytService
 
 
         public void OnTimer(object sender, System.Timers.ElapsedEventArgs args)
-        { 
-
-            talkToServer();
+        {
+            eventLog2.WriteEntry("Tick3", EventLogEntryType.Information);
+            try
+            {
+                talkToServer();
+            }
+            catch (Exception ex)
+            {
+                eventLog2.WriteEntry("exception in Tick3" + ex.Message + ex.StackTrace, EventLogEntryType.Error);
+            }
+            eventLog2.WriteEntry("Tick3 ended", EventLogEntryType.Information);
         }
 
         protected override void OnSessionChange(SessionChangeDescription changeDescription)
@@ -163,18 +172,31 @@ namespace FlorytService
             return readText;
         }
 
-        private void talkToServer()
+        public void talkToServer()
         {
-            string strUID = getUID();
+            eventLog2.WriteEntry("in talkToServer", EventLogEntryType.Information);
+            string strUID = "aaa";
+            try
+            {
+                strUID = getUID();
+            }
+            catch (Exception ex)
+            {
+                eventLog2.WriteEntry("exception " + ex.Message + ex.StackTrace, EventLogEntryType.Error);
+            }
 
             //---http
             // Create a request using a URL that can receive a post. 
+            eventLog2.WriteEntry("Create a request using a URL that can receive a post", EventLogEntryType.Information);
             WebRequest request = WebRequest.Create("https://us-central1-floryt-88029.cloudfunctions.net/service");
             // Set the Method property of the request to POST.
             request.Method = "POST";
+            eventLog2.WriteEntry("Set the Method property of the request to POST", EventLogEntryType.Information);
             // Create POST data and convert it to a byte array.
             string status = GetStatus();
+            eventLog2.WriteEntry("GetStatus()" + status, EventLogEntryType.Information);
             string email = GetCurrentUser();
+            eventLog2.WriteEntry(String.Format("Found:: Status: {0}, Email: {1}", status, email), EventLogEntryType.Information);
             string postData = "{\"computerUid\":\"" + strUID + "\", \"status\":\"" + status + "\", \"user\":\"" + email + "\"}";
             //Console.WriteLine(postData);
             byte[] byteArray = Encoding.UTF8.GetBytes(postData);
@@ -191,7 +213,7 @@ namespace FlorytService
             // Get the response.
             WebResponse response = request.GetResponse();
             // Display the status.
-
+            eventLog2.WriteEntry(String.Format("StatusDescription:: {0}", ((HttpWebResponse)response).StatusDescription), EventLogEntryType.Information);
             if (((HttpWebResponse)response).StatusDescription == "OK")
             {
                 // Get the stream containing content returned by the server.
@@ -208,6 +230,7 @@ namespace FlorytService
 
                 dynamic array = JsonConvert.DeserializeObject(responseFromServer);
                 string command = array.command;
+                eventLog2.WriteEntry(String.Format("command:: {0}", command, EventLogEntryType.Information));
                 switch (command)
                 {
                     case "lock":
@@ -249,6 +272,10 @@ namespace FlorytService
                 }
 
             } //else: dont to anything.
+            else
+            {
+                eventLog2.WriteEntry("server didnt sent ok", EventLogEntryType.Error);
+            }
             
         }
 
@@ -267,12 +294,13 @@ namespace FlorytService
 
         private string getUID()
         {
+            eventLog2.WriteEntry("in get UID", EventLogEntryType.Information);
             //---get uid
             //Create process
             System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
 
             //strCommand is path and file name of command to run
-            pProcess.StartInfo.FileName = @"C:\Program Files\Floryt\find_id.exe";
+            pProcess.StartInfo.FileName = @"C:\Users\User\Floryt\find_id.exe";
 
             //strCommandParameters are parameters to pass to program
             pProcess.StartInfo.Arguments = null;
@@ -284,8 +312,11 @@ namespace FlorytService
 
             pProcess.StartInfo.CreateNoWindow = true;
 
+            eventLog2.WriteEntry("starting GETUID", EventLogEntryType.Information);
             //Start the process
             pProcess.Start();
+
+            eventLog2.WriteEntry("started GETUID", EventLogEntryType.Information);
 
             //Get program output
             string strUID = pProcess.StandardOutput.ReadToEnd();
@@ -294,6 +325,8 @@ namespace FlorytService
             //Console.WriteLine(strUID);
             //Wait for process to finish
             pProcess.WaitForExit();
+
+            eventLog2.WriteEntry("finished getUID", EventLogEntryType.Information);
 
             return strUID;
         }
@@ -334,9 +367,9 @@ namespace FlorytService
 
         private void WriteToFile(string command)
         {
-            string file_path = @"C:\Program Files\Floryt\command.txt";//@ is for no special chars
+            string file_path = @"C:\Users\User\Floryt\command.txt";//@ is for no special chars
 
-            using (FileStream fs = File.Create(file_path)) //using because file is an unmanaged resource (=memory) so you make sure Dispose function will work for them (and for file, the 'Close' method as well)
+            using (FileStream fs = File.Create(file_path)) //using because file is an unmanaged resource (=memory) so yofu make sure Dispose function will work for them (and for file, the 'Close' method as well)
             {
                 //the file is created
             }
