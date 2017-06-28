@@ -318,7 +318,7 @@ __pycache__/
 
 #visual studio
 *.resx
-*.sln
+#*.sln
 *.csproj
 packages.config
 AssemblyInfo.cs
