@@ -1,4 +1,6 @@
-﻿namespace FlorytService
+﻿using System.Diagnostics;
+
+namespace FlorytService
 {
     partial class FlorytService
     {
@@ -6,7 +8,8 @@
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-
+        private EventLog eventLog;
+        
         /// <summary>
         /// Clean up any resources being used.
         /// </summary>
@@ -28,11 +31,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.CanHandleSessionChangeEvent = true;
+            this.CanHandlePowerEvent = true;
             this.eventLog = new System.Diagnostics.EventLog();
             ((System.ComponentModel.ISupportInitialize)(this.eventLog)).BeginInit();
-            // 
-            // FlorytService
-            // 
+            
             this.ServiceName = "Floryt";
             ((System.ComponentModel.ISupportInitialize)(this.eventLog)).EndInit();
 

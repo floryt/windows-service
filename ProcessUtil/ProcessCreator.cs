@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ProcessUtil
 {
-    class ProcessUtil
+    public class ProcessCreator
     {
         [DllImport("wtsapi32.dll")]
         static extern Int32 WTSEnumerateSessions(
@@ -119,8 +119,9 @@ namespace ProcessUtil
             return server;
         }
 
-        public void createProcess()
+        public void createProcess(string executablePath, params string[] args)
         {
+            if (executablePath == null) throw new ArgumentNullException(nameof(executablePath));
             IntPtr server = IntPtr.Zero;
             IntPtr token = IntPtr.Zero;
 
@@ -138,8 +139,8 @@ namespace ProcessUtil
             foreach (UInt32 sessionID in ListSessions())
             {
                 bool gotToken = WTSQueryUserToken(sessionID, out token);
-                CreateProcessAsUser(token, @"C:\windows\notepad.exe", String.Empty, ref sa, ref sa,
-                    false, 0, IntPtr.Zero, @"c:\", ref si, ref pi);
+                CreateProcessAsUser(token, executablePath, string.Empty, ref sa, ref sa,
+                    false, 0, IntPtr.Zero, @"C:\Program Files\Floryt\", ref si, ref pi);
             }
         }
 
@@ -159,24 +160,28 @@ namespace ProcessUtil
                 Int32 retval = WTSEnumerateSessions(server, 0, 1, ref ppSessionInfo, ref count);
                 Int32 dataSize = Marshal.SizeOf(typeof(WTS_SESSION_INFO));
 
-                Int32 current = (int)ppSessionInfo;
+                Int32 current = (int) ppSessionInfo;
 
                 if (retval != 0)
                 {
                     for (int i = 0; i < count; i++)
                     {
                         WTS_SESSION_INFO si =
-                            (WTS_SESSION_INFO)Marshal.PtrToStructure((System.IntPtr)current,
+                            (WTS_SESSION_INFO) Marshal.PtrToStructure((System.IntPtr) current,
                                 typeof(WTS_SESSION_INFO));
                         current += dataSize;
                         if (si.State == WTS_CONNECTSTATE_CLASS.WTSActive)
                         {
-                            ret.Add((UInt32)si.SessionID);
+                            ret.Add((UInt32) si.SessionID);
 
                         }
 
                     }
                 }
+            }
+            finally
+            {
+                
             }
             return ret;
         }

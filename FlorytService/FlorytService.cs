@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.ServiceProcess;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using ProcessUtil;
 
 namespace FlorytService
 {
@@ -37,13 +34,15 @@ namespace FlorytService
         public long dwServiceSpecificExitCode;
         public long dwCheckPoint;
         public long dwWaitHint;
-    };
+    }
 
     public partial class FlorytService : ServiceBase
     {
         private const string SERVER_URL = "https://us-central1-floryt-88029.cloudfunctions.net/service";
-        private EventLog eventLog; // a declaration for the eventLog
-        private SessionChangeReason state;
+        private const string WORKING_DIR = @"C:\Program Files\Floryt\";
+        private const string UID_GENARETOR_EXECUTABLE_NAME = "ComputerUidGenerator.exe";
+        private const string WORKER_EXECUTABLE_NAME = "Executioner.exe";
+        private string state;
 
         //calling a function from a DLL
         //(SetServiceStatus function -> Updates the service control manager's status information for the calling service)
@@ -57,13 +56,13 @@ namespace FlorytService
 
             eventLog = new EventLog();
 
-            if (!EventLog.SourceExists("MySource"))
+            if (!EventLog.SourceExists("Floryt"))
             {
                 EventLog.CreateEventSource(
-                    "Floryt Service", "Floryt");
+                    "Floryt", "Floryt");
             }
 
-            eventLog.Source = "Floryt Service";
+            eventLog.Source = "Floryt";
             eventLog.Log = "Floryt";
 
 
@@ -73,82 +72,36 @@ namespace FlorytService
             timer.Elapsed += OnTimer;
             timer.Start();
         }
-
-        protected override void OnStart(string[] args)
-        {
-            //--------Update the service state to Start Pending. (first - pending, then run)
-            //creating the status
-            ServiceStatus serviceStatus = new ServiceStatus
-            {
-                dwCurrentState = ServiceState.SERVICE_START_PENDING,
-                dwWaitHint = 100000
-            };
-            //informing the SCM the status
-            SetServiceStatus(ServiceHandle, ref serviceStatus);
-
-
-            eventLog.WriteEntry("Started service"); //writes to log
-
-
-            // Update the service state to Running.
-            serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
-            SetServiceStatus(ServiceHandle, ref serviceStatus);
-        }
-
-        protected override void OnStop()
-        {
-            eventLog.WriteEntry("Stopped service");
-        }
-
-
-        public void OnTimer(object sender, System.Timers.ElapsedEventArgs args)
-        {
-            eventLog.WriteEntry("Tick", EventLogEntryType.Information);
-            try
-            {
-                SendStatus();
-                //ProcessUtil processUtil = new ProcessUtil();
-                //processUtil.createProcess();
-
-            }
-            catch (Exception ex)
-            {
-                eventLog.WriteEntry("exception in Tick " + ex.Message + ex.StackTrace, EventLogEntryType.Error);
-            }
-            eventLog.WriteEntry("Tick3 ended", EventLogEntryType.Information);
-        }
-
+        
         protected override void OnSessionChange(SessionChangeDescription changeDescription)
         {
 
-            EventLog.WriteEntry("SimpleService.OnSessionChange", DateTime.Now.ToLongTimeString() +
-                " - Session change notice received: " +
-                changeDescription.Reason + "  Session ID: " +
-                changeDescription.SessionId);
+            eventLog.WriteEntry("SimpleService.OnSessionChange - " +
+                                $"Session change notice received: {changeDescription.Reason}\n" +
+                                $"Session ID: {changeDescription.SessionId}", EventLogEntryType.Information);
 
             //global variable to save the current status. every 5 seconds we will check it and determine what to do.
             switch (changeDescription.Reason)
             {
                 case SessionChangeReason.SessionLogon:
                     eventLog.WriteEntry("logged in", EventLogEntryType.Information);
-                    state = SessionChangeReason.SessionLogon;
+                    state = "logged in";
                     break;
-
                 case SessionChangeReason.SessionUnlock:
                     eventLog.WriteEntry("unlocked", EventLogEntryType.Information);
-                    state = SessionChangeReason.SessionUnlock;
+                    state = "logged in";
                     break;
-
                 case SessionChangeReason.SessionLogoff:
                     eventLog.WriteEntry("logged out", EventLogEntryType.Information);
-                    state = SessionChangeReason.SessionLogoff;
+                    state = "logged out";
                     break;
-
                 case SessionChangeReason.SessionLock:
                     eventLog.WriteEntry("locked", EventLogEntryType.Information);
-                    state = SessionChangeReason.SessionLock;
+                    state = "locked";
                     break;
                 case SessionChangeReason.ConsoleConnect:
+                    eventLog.WriteEntry("Console connected", EventLogEntryType.Information);
+                    state = "logged in";
                     break;
                 case SessionChangeReason.ConsoleDisconnect:
                     break;
@@ -163,9 +116,77 @@ namespace FlorytService
             }
         }
 
-        private static string GetCurrentUser()
+        protected override void OnStart(string[] args)
         {
-            const string filePath = @"C:\Program Files\Floryt\current_user.txt";
+            // Update the service state to Pending.
+            ServiceStatus serviceStatus = new ServiceStatus
+            {
+                dwCurrentState = ServiceState.SERVICE_START_PENDING,
+                dwWaitHint = 100000
+            };
+            //informing the SCM the status
+            SetServiceStatus(ServiceHandle, ref serviceStatus);
+            eventLog.WriteEntry("Service started"); //writes to log
+            // Update the service state to Running.
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
+            SetServiceStatus(ServiceHandle, ref serviceStatus);
+            
+            
+        }
+
+        protected override void OnStop()
+        {
+            eventLog.WriteEntry("Service stopped");
+        }
+
+        protected override bool OnPowerEvent(PowerBroadcastStatus powerStatus)
+        {
+            //TODO: add support for power status
+            switch (powerStatus)
+            {
+                case PowerBroadcastStatus.BatteryLow:
+                    break;
+                case PowerBroadcastStatus.OemEvent:
+                    break;
+                case PowerBroadcastStatus.PowerStatusChange:
+                    break;
+                case PowerBroadcastStatus.QuerySuspend:
+                    break;
+                case PowerBroadcastStatus.QuerySuspendFailed:
+                    break;
+                case PowerBroadcastStatus.ResumeAutomatic:
+                    break;
+                case PowerBroadcastStatus.ResumeCritical:
+                    break;
+                case PowerBroadcastStatus.ResumeSuspend:
+                    break;
+                case PowerBroadcastStatus.Suspend:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(powerStatus), powerStatus, null);
+            }
+            return base.OnPowerEvent(powerStatus);
+        }
+
+        public void OnTimer(object sender, System.Timers.ElapsedEventArgs args)
+        {
+            eventLog.WriteEntry("Tick started", EventLogEntryType.Information);
+            try {
+                dynamic result = SendStatus();
+                if (result == null) return;
+                
+                ProcessCreator processCreator = new ProcessCreator();
+                processCreator.createProcess(WORKING_DIR + WORKER_EXECUTABLE_NAME, result.message);
+            } catch (Exception ex) {
+                eventLog.WriteEntry($"Tick failed: {ex.Message} {ex.StackTrace}", EventLogEntryType.Error);
+            }
+            eventLog.WriteEntry("Tick finished", EventLogEntryType.Information);
+        }
+
+
+        private string GetCurrentUser()
+        {
+            const string filePath = WORKING_DIR + @"current_user.txt"; //TODO: read from registry
             string readText;
             try
             {
@@ -173,9 +194,9 @@ namespace FlorytService
             }
             catch (Exception ex)
             {
+                eventLog.WriteEntry($"Failed to read user: {ex.Message}", EventLogEntryType.FailureAudit);
                 readText = "no user";
             }
-
             return readText;
         }
 
@@ -183,31 +204,41 @@ namespace FlorytService
         /// Method which sends the session status to the server. </summary>
         /// <returns>
         /// Return result from the server which represents a command to execute on the session.</returns>
-        public void SendStatus()
+        public dynamic SendStatus()
         {
             string computerUid = CalculateComputerUid();
-            WebRequest request = WebRequest.Create(SERVER_URL);
-            request.Method = "POST";
-            string status = GetStatus();
             string email = GetCurrentUser();
             Dictionary<string, string> metadata =
-                new Dictionary<string, string> { { "computerUid", computerUid }, { "status", status }, { "user", email } };
+                new Dictionary<string, string> { { "computerUid", computerUid }, { "status", state }, { "user", email } };
+            string postData = JsonConvert.SerializeObject(metadata);
+            eventLog.WriteEntry($"Created metadata: {postData}", EventLogEntryType.Information);
 
-            string postData = "{" + $"{metadata.Select(data => $"{data.Key}: {data.Value}")}" + "}";
-            byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+            WebRequest request = WebRequest.Create(SERVER_URL);
+            request.Method = "POST";
             request.ContentType = "application/json";
+            
+            byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             request.ContentLength = byteArray.Length;
             Stream dataStream = request.GetRequestStream();
             dataStream.Write(byteArray, 0, byteArray.Length);
             dataStream.Close();
-            WebResponse response = request.GetResponse();
-            // Display the status.
 
-            if (((HttpWebResponse)response).StatusDescription != "OK") return;
+            WebResponse response;
+            try
+            {
+                response = request.GetResponse();
+            }
+            catch (Exception e)
+            {
+                eventLog.WriteEntry($"Failed to get response: {e.Message}", EventLogEntryType.FailureAudit);
+                return null;
+            }
+
+            if (((HttpWebResponse)response).StatusDescription != "OK") return null;
             // Get the stream containing content returned by the server.
             dataStream = response.GetResponseStream();
             // Open the stream using a StreamReader for easy access.
-            if (dataStream == null) return;
+            if (dataStream == null) return null;
             StreamReader reader = new StreamReader(dataStream);
             // Read the content.
             string responseFromServer = reader.ReadToEnd();
@@ -215,46 +246,10 @@ namespace FlorytService
             dataStream.Close();
             response.Close();
 
-            eventLog.WriteEntry("response: " + responseFromServer, EventLogEntryType.Information);
+            eventLog.WriteEntry("response: " + (responseFromServer.Length == 0 ? "TTML" : responseFromServer), EventLogEntryType.Information);
 
-            //dynamic array = JsonConvert.DeserializeObject(responseFromServer);
-
-            //switch (array.command)
-            //{
-            //    case "lock":
-            //        if (state != SessionChangeReason.SessionLogoff || state != SessionChangeReason.SessionLock)
-            //        {
-            //        }
-            //        break;
-            //    case "shutdown":
-            //        break;
-            //    case "present_message":
-            //        break;
-            //    case "take_screenshot":
-            //        break;
-            //}
-        }
-
-        private string GetStatus()
-        {
-            switch (state)
-            {
-                case SessionChangeReason.ConsoleConnect:
-                    return "logged in";
-                case SessionChangeReason.ConsoleDisconnect:
-                    return "logged out";
-                case SessionChangeReason.SessionLogon:
-                    break;
-                case SessionChangeReason.SessionLogoff:
-                    break;
-                case SessionChangeReason.SessionLock:
-                    break;
-                case SessionChangeReason.SessionUnlock:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            return "unknown";
+            dynamic result = JsonConvert.DeserializeObject(responseFromServer);
+            return result;
         }
 
         private static string CalculateComputerUid()
@@ -265,8 +260,7 @@ namespace FlorytService
                 {
                     StartInfo =
                     {
-                        FileName = @"C:\Users\User\Floryt\find_id.exe", //TODO: check if it can be dll or resource
-                        Arguments = null, //TODO: check if statment is redundant
+                        FileName = WORKING_DIR + UID_GENARETOR_EXECUTABLE_NAME,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         CreateNoWindow = true
@@ -275,43 +269,31 @@ namespace FlorytService
             pProcess.Start();
 
             string strUid = pProcess.StandardOutput.ReadToEnd();
-            strUid = strUid.Remove(strUid.Length - 2);
-            pProcess.WaitForExit(); //TODO: check if statment is redundant
-            /////////////////////////////////
-            byte[] myResBytes;
-            using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("UidCalculator.exe"))
-            {
-                byte[] buffer = new byte[1024];
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    while (true)
-                    {
-                        int read = s.Read(buffer, 0, buffer.Length);
-                        if (read <= 0)
-                        {
-                            myResBytes = ms.ToArray();
-                            break;
-                        }
-                        ms.Write(buffer, 0, read);
-                    }
-                }
-            }
-            Assembly asm = Assembly.Load(myResBytes);
-            // search for the Entry Point
-            MethodInfo method = asm.EntryPoint;
-            if (method == null) throw new NotSupportedException();
-            // create an instance of the Startup form Main method
-            object o = asm.CreateInstance(method.Name);
-            // invoke the application starting point
-            method.Invoke(o, null);
-
+            strUid = strUid.Replace("\r\n", string.Empty);
+            
             return strUid;
         }
 
 
         protected override void OnShutdown()
         {
-            //TODO: update status
+            state = "shutdown";
+            string computerUid = CalculateComputerUid();
+            string email = GetCurrentUser();
+            Dictionary<string, string> metadata =
+                new Dictionary<string, string> { { "computerUid", computerUid }, { "status", state }, { "user", email } };
+            string postData = JsonConvert.SerializeObject(metadata);
+            eventLog.WriteEntry($"Created metadata: {postData}", EventLogEntryType.Information);
+
+            WebRequest request = WebRequest.Create(SERVER_URL);
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            
+            byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+            request.ContentLength = byteArray.Length;
+            Stream dataStream = request.GetRequestStream();
+            dataStream.Write(byteArray, 0, byteArray.Length);
+            dataStream.Close();
         }
     }
 }
