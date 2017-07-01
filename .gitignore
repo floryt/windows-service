@@ -24,8 +24,7 @@
 *.lib
 
 # Executables
-!MyNewService\FlorytService.exe
-\!*.exe
+*.exe
 *.out
 *.app
 
@@ -318,7 +317,7 @@ __pycache__/
 
 #visual studio
 *.resx
-#*.sln
-*.csproj
+# *.sln
+# *.csproj
 packages.config
 AssemblyInfo.cs
