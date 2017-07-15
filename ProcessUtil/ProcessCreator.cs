@@ -119,7 +119,7 @@ namespace ProcessUtil
             return server;
         }
 
-        public void createProcess(string executablePath, params string[] args)
+        public void createProcess(string executablePath, string arguments)
         {
             if (executablePath == null) throw new ArgumentNullException(nameof(executablePath));
             IntPtr server = IntPtr.Zero;
@@ -139,7 +139,7 @@ namespace ProcessUtil
             foreach (UInt32 sessionID in ListSessions())
             {
                 bool gotToken = WTSQueryUserToken(sessionID, out token);
-                CreateProcessAsUser(token, executablePath, string.Empty, ref sa, ref sa,
+                CreateProcessAsUser(token, executablePath, $"{executablePath} {arguments}", ref sa, ref sa,
                     false, 0, IntPtr.Zero, @"C:\Program Files\Floryt\", ref si, ref pi);
             }
         }
