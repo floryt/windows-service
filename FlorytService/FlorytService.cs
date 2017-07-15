@@ -38,14 +38,13 @@ namespace FlorytService
 
     public partial class FlorytService : ServiceBase
     {
+        // TODO: Use pubsub
         private const string SERVER_URL = "https://us-central1-floryt-88029.cloudfunctions.net/service";
         private const string WORKING_DIR = @"C:\Program Files\Floryt\";
         private const string UID_GENARETOR_EXECUTABLE_NAME = "ComputerUidGenerator.exe";
         private const string WORKER_EXECUTABLE_NAME = "Executioner.exe";
         private string state;
 
-        //calling a function from a DLL
-        //(SetServiceStatus function -> Updates the service control manager's status information for the calling service)
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
 
@@ -69,7 +68,7 @@ namespace FlorytService
             // Set up a timer to trigger every half a minute.
             eventLog.WriteEntry("Created timer", EventLogEntryType.Information);
             System.Timers.Timer timer = new System.Timers.Timer { Interval = 5000 };
-            timer.Elapsed += OnTimer;
+            timer.Elapsed += SendStatus;
             timer.Start();
         }
         
@@ -168,15 +167,20 @@ namespace FlorytService
             return base.OnPowerEvent(powerStatus);
         }
 
-        public void OnTimer(object sender, System.Timers.ElapsedEventArgs args)
+        public void SendStatus(object sender, System.Timers.ElapsedEventArgs args)
         {
             eventLog.WriteEntry("Tick started", EventLogEntryType.Information);
             try {
                 dynamic result = SendStatus();
                 if (result == null) return;
+                if (result.command == null) return;
+                
+                string message = result.message != null ? $"-m {result.message}" : "";
+                
+                eventLog.WriteEntry($"Starting process for {result.command}\n-c {result.command} {message}");
                 
                 ProcessCreator processCreator = new ProcessCreator();
-                processCreator.createProcess(WORKING_DIR + WORKER_EXECUTABLE_NAME, result.message);
+                processCreator.createProcess(WORKING_DIR + WORKER_EXECUTABLE_NAME, $"-c {result.command} {message}");
             } catch (Exception ex) {
                 eventLog.WriteEntry($"Tick failed: {ex.Message} {ex.StackTrace}", EventLogEntryType.Error);
             }
@@ -254,7 +258,6 @@ namespace FlorytService
 
         private static string CalculateComputerUid()
         {
-            //Create process
             Process pProcess =
                 new Process
                 {
