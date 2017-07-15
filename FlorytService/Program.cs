@@ -15,9 +15,9 @@ namespace FlorytService
         static void Main()
         {
             ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[] 
-            { 
-                new FlorytSrvs() 
+            ServicesToRun = new ServiceBase[]
+            {
+                new FlorytService()
             };
             ServiceBase.Run(ServicesToRun);
         }

@@ -1,12 +1,15 @@
-﻿namespace FlorytService
+﻿using System.Diagnostics;
+
+namespace FlorytService
 {
-    partial class FlorytSrvs
+    partial class FlorytService
     {
         /// <summary> 
         /// Required designer variable.
         /// </summary>
-        //private System.ComponentModel.IContainer components = null;
-
+        private System.ComponentModel.IContainer components = null;
+        private EventLog eventLog;
+        
         /// <summary>
         /// Clean up any resources being used.
         /// </summary>
@@ -28,18 +31,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.eventLog2 = new System.Diagnostics.EventLog();
-            ((System.ComponentModel.ISupportInitialize)(this.eventLog2)).BeginInit();
-            // 
-            // FlorytService
-            // 
-            this.ServiceName = "FlorytService";
-            ((System.ComponentModel.ISupportInitialize)(this.eventLog2)).EndInit();
+            this.CanHandleSessionChangeEvent = true;
+            this.CanHandlePowerEvent = true;
+            this.eventLog = new System.Diagnostics.EventLog();
+            ((System.ComponentModel.ISupportInitialize)(this.eventLog)).BeginInit();
+            
+            this.ServiceName = "Floryt";
+            ((System.ComponentModel.ISupportInitialize)(this.eventLog)).EndInit();
 
         }
 
         #endregion
-
-        private System.Diagnostics.EventLog eventLog1;
     }
 }
