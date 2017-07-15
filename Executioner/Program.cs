@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 
@@ -15,7 +16,7 @@ namespace Executioner
 {
     enum Command
     {
-        ShowMesasage,
+        ShowMessage,
         LockWorkstation,
         Shutdown,
         TakeScreenshot
@@ -25,7 +26,9 @@ namespace Executioner
     {
         private static string SCREENSHOT_UPLOAD_URL = @"https://us-central1-floryt-88029.cloudfunctions.net/upload_screenshot";
         private static string WORKING_DIR = @"C:\Program Files\Floryt\";
-        private static string SCREENSHOT_FOLDER = WORKING_DIR + @"Screenshots\";
+        private static string SCREENSHOT_FOLDER = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + 
+            @"\Floryt\Screenshots\");
 
         [DllImport("user32")]
         public static extern void LockWorkStation();
@@ -40,7 +43,7 @@ namespace Executioner
             if (!args.Contains("-c")) return;
             string command = args.ElementAt(Array.IndexOf(args, "-c") + 1);
             string message = string.Empty;
-            if (command == "ShowMesasage")
+            if (command == "ShowMessage")
             {
                 if (!args.Contains("-m")) return;
                 message = args.ElementAt(Array.IndexOf(args, "-m") + 1);
@@ -58,7 +61,7 @@ namespace Executioner
 
             switch (commandEnum)
             {
-                case Command.ShowMesasage:
+                case Command.ShowMessage:
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
                     Application.Run(new Message(message));
