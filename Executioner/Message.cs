@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace Executioner
@@ -15,6 +8,11 @@ namespace Executioner
         public Message(string message)
         {
             InitializeComponent();
+            messageTextBox.Text = message;
+            messageTextBox.Location = new Point(ClientSize.Width / 2 - messageTextBox.Size.Width / 2,
+                                                ClientSize.Height / 2 - messageTextBox.Size.Height / 2);
+            messageTextBox.Anchor = AnchorStyles.None;
+            messageTextBox.Dock = DockStyle.Fill;
         }
     }
 }
